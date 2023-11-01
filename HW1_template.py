@@ -1,6 +1,7 @@
 from typing import Callable, List, Tuple
 from dataclasses import dataclass
 import numpy as np
+import matplotlib.pyplot as plt
 
 ############ Solution functions ################
 # The function bodies in the following section #
