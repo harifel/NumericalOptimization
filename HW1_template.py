@@ -18,7 +18,7 @@ rho: float = 0.61803398875
 ###############################################
 
 ########### Main solution function : ##########
-print('hello')
+
 def line_search(
     f: Callable,
     alpha0: float,
@@ -44,12 +44,9 @@ def line_search(
     """    
     line_fun = lambda alpha: f(x0 + alpha*g)
     
-
-
-
     return a, b, f_calls
 
-def bracketing(a,s,k,f, max_steps: int = 10e3):
+def bracketing(a,s,k,f):
     """
     Parameters
     ----------
@@ -57,8 +54,6 @@ def bracketing(a,s,k,f, max_steps: int = 10e3):
     s : step size
     k : step size increase
     f : function to be minimized
-    max_steps : int, optional
-        maximum step size, after which the function is terminated. The default is 10e3.
 
     Returns
     -------
@@ -66,34 +61,44 @@ def bracketing(a,s,k,f, max_steps: int = 10e3):
     c : second bracket
 
     """
-    start = f(a)
-    step = 1
-    
+    state = True
+    i = 0
+
+    b = a + s
     #define search direction g
-    if f(a)>f(a+s):
-        g = 1
+    if f(a)>f(b):
+        pass
     else:
-        g = -1
-
-    while step <= max_steps:
-        stepsize_b = s*step
-        stepsize_c = stepsize_b*k
-        b = a + g*stepsize_b
-        c = a + g*stepsize_c
-        
-        if (f(a)>f(b) & f(b) < f(c)):
+        a,b = b,a
+        s = -s
+    c = b + s
+    
+    while state == True:
+        plt.figure(dpi=400)
+        plt.plot(interval, test_fun(interval), 'ko-', linewidth=0.5, markersize = 2)
+        plt.scatter(a, test_fun(a), s=30, c='r', label='A', marker='^')  
+        plt.scatter(b, test_fun(b), s=30, c='b', label='B', marker='^')  
+        plt.scatter(c, test_fun(c), s=30, c='g', label='C', marker='^')  
+        plt.legend()
+        plt.title(f'Iteration {i}')
+        i +=1
+        if f(c) > f(b):
             break
-            print(step)
-        step += 1
-        
-    return a,c
+        else: 
+            a = b
+            b = c
+            s = s * k
+            c = b + s
+    return a,b,c
 
-test_fun = lambda x: x**2
 
-a_test, c_test = bracketing(50,1,2,test_fun)
-print(a_test, c_test)
+test_fun = lambda x: np.sin(x) - np.sin(10/3*x)
+interval = np.linspace(-1,1)
+a_test, b_test, c_test = bracketing(0,0.1,2,test_fun)
+print(a_test, b_test, c_test)
 
-def sectioning(a, b, f, tol: float = 10e-3, max_steps: int = 10e3):
+
+def sectioning(a, b, f, tol: float = 10e-6, max_steps: int = 10e3):
     a_new = a
     b_new = b
     c = b - rho*(b-a)
@@ -119,14 +124,13 @@ def sectioning(a, b, f, tol: float = 10e-3, max_steps: int = 10e3):
         if counter > max_steps:
             running = False
             print("Max. step reached")
-            
-        
+                    
         counter += 1
             
     return (a_new+b_new)/2
 
-test_sol = sectioning(a_test, c_test,test_fun, tol = 10e-5)
-print(test_sol)
+# test_sol = sectioning(a_test, c_test,test_fun, tol = 10e-5)
+# print(test_sol)
 
 ############ CONTROL FUNCTIONS ################ 
 # Please do not change these functions as the #
