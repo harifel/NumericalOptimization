@@ -47,7 +47,7 @@ def line_search(
     
     return a, b, f_calls
 
-def bracketing(a,s,k,f):
+def bracketing(a,s,k,f,g, max_it: float = 10e3):
     """
     Parameters
     ----------
@@ -55,6 +55,7 @@ def bracketing(a,s,k,f):
     s : step size
     k : step size increase
     f : function to be minimized
+    g : search direction
 
     Returns
     -------
@@ -64,46 +65,69 @@ def bracketing(a,s,k,f):
     """
     state = True
     i = 0
+    a_array,b_array,c_array = [],[],[]
 
-    b = a + s
-    #define search direction g
-    if f(a)>f(b):
-        pass
-    else:
-        a,b = b,a
-        s = -s
-    c = b + s
-    
-    while state == True:
-        plt.figure(dpi=400)
-        plt.plot(interval, test_fun(interval), 'ko-', linewidth=0.5, markersize = 2)
-        plt.scatter(a, test_fun(a), s=30, c='r', label='A', marker='^')  
-        plt.scatter(b, test_fun(b), s=30, c='b', label='B', marker='^')  
-        plt.scatter(c, test_fun(c), s=30, c='g', label='C', marker='^')  
-        plt.legend()
-        plt.title(f'Iteration {i}')
-        i +=1
-        if f(c) > f(b):
-            break
-        else: 
-            a = b
-            b = c
-            s = s * k
-            c = b + s
-    return a,b,c
+    s0,a0 = s, np.copy(a)
+
+    for dim in range(np.size(a)):
+        
+        a, b, c = np.copy(a0), np.copy(a0), np.copy(a0)
+        
+        b[:,dim] = b[:,dim] + s*g[:,dim]
+        #define search direction g
+        # if f(a)>f(b):
+        #     pass
+        # else:
+        #     a,b = b,a
+        #     s = -s
+            
+        c[:,dim] += 2*s*g[:,dim]
+        
+        while state == True:
+            # plt.figure(dpi=400)
+            # plt.plot(interval, test_fun(interval), 'ko-', linewidth=0.5, markersize = 2)
+            # plt.scatter(a, test_fun(a), s=30, c='r', label='A', marker='^')  
+            # plt.scatter(b, test_fun(b), s=30, c='b', label='B', marker='^')  
+            # plt.scatter(c, test_fun(c), s=30, c='g', label='C', marker='^')  
+            # plt.legend()
+            # plt.title(f'Iteration {i}')
+            i +=1
+            if f(c) > f(b):
+                a_array.append(a[:,dim][0])
+                b_array.append(b[:,dim][0])
+                c_array.append(c[:,dim][0])
+                s = s0
+                break
+            else: 
+                a,b = np.copy(b), np.copy(b)
+                b = np.copy(c)
+                s = s * k
+                c[:,dim] += s*g[:,dim]
+            
+            if i > max_it:
+                state = False
+                
+        
+    return a_array,b_array,c_array
 
 
-test_fun = lambda x: np.sin(x) - np.sin(10/3*x)
-interval = np.linspace(-1,1)
-a_test, b_test, c_test = bracketing(0,0.1,2,test_fun)
+test_fun = lambda x: np.sin(x[:,0]) - np.sin(10/3*x[:,0]) + np.sin(x[:,1]) - np.sin(10/3*x[:,1])
+#interval = np.linspace(-1,1)
+a_test, b_test, c_test = bracketing(np.array([[0,0]], dtype=np.float32),0.1,2,test_fun, np.array([[-1,-1]]))
 print(a_test, b_test, c_test)
 
 
 def sectioning(a, b, f, tol: float = 10e-6, max_steps: int = 10e3):
-    a_new = a
-    b_new = b
-    c = b - rho*(b-a)
-    d = a + rho*(b-a)
+    
+    value1, value2 = [],[]
+    
+    
+    # unit_vec = np.array([[0]*np.size(a)])
+    # unit_vec[:,dim] = 1
+    a_new, b_new = np.array([a]), np.array([b])
+
+    c = b_new - rho*(b_new-a_new)
+    d = a_new + rho*(b_new-a_new)
     
     running = True
     counter = 0
@@ -111,16 +135,17 @@ def sectioning(a, b, f, tol: float = 10e-6, max_steps: int = 10e3):
     while running:
         if f(c) < f(d):
             b_new = d
-            d = c
+            d = np.copy(c)
             c = b_new - rho*(b_new-a_new)
         else:
-            a_new = c
+            a_new = np.copy(c)
             c = d
             d = a_new + rho*(b_new-a_new)
         
-        if abs(a_new-b_new) < tol:
+        if np.all(abs(a_new-b_new) < tol):
             running = False
             print("Threshold reached")
+
             
         if counter > max_steps:
             running = False
@@ -128,8 +153,10 @@ def sectioning(a, b, f, tol: float = 10e-6, max_steps: int = 10e3):
                     
         counter += 1
             
-    return (a_new+b_new)/2
+    return a_new,b_new
 
+
+sol = sectioning(a_test, c_test, test_fun)
 # test_sol = sectioning(a_test, c_test,test_fun, tol = 10e-5)
 # print(test_sol)
 
@@ -140,3 +167,5 @@ def sectioning(a, b, f, tol: float = 10e-6, max_steps: int = 10e3):
 
 def get_test_fun_list() -> List[Callable]:
     return [line_search]
+
+
