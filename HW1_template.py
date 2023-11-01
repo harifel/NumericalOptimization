@@ -18,7 +18,7 @@ rho: float = 0.61803398875
 ###############################################
 
 ########### Main solution function : ##########
-
+print('hello')
 def line_search(
     f: Callable,
     alpha0: float,
