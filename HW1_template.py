@@ -11,9 +11,8 @@ import matplotlib.pyplot as plt
 ################################################
 
 ############ Global variables #################
-
 rho: float = 0.61803398875
-
+state: str = True
 ############ Helper functions #################
 # Can be implemented here if needed.          #
 ###############################################
@@ -62,10 +61,11 @@ def bracketing(a,s,k,f):
     c : second bracket
 
     """
-    state = True
+    
     i = 0
 
     b = a + s
+    
     #define search direction g
     if f(a)>f(b):
         pass
@@ -77,11 +77,11 @@ def bracketing(a,s,k,f):
     while state == True:
         plt.figure(dpi=400)
         plt.plot(interval, test_fun(interval), 'ko-', linewidth=0.5, markersize = 2)
-        plt.scatter(a, test_fun(a), s=30, c='r', label='A', marker='^')  
-        plt.scatter(b, test_fun(b), s=30, c='b', label='B', marker='^')  
-        plt.scatter(c, test_fun(c), s=30, c='g', label='C', marker='^')  
+        plt.scatter(a, f(a), s=30, c='r', label='A', marker='^')  
+        plt.scatter(b, f(b), s=30, c='b', label='B', marker='^')  
+        plt.scatter(c, f(c), s=30, c='g', label='C', marker='^')  
         plt.legend()
-        plt.title(f'Iteration {i}')
+        plt.title(f'Bracketing - Iteration {i}')
         i +=1
         if f(c) > f(b):
             break
@@ -90,48 +90,63 @@ def bracketing(a,s,k,f):
             b = c
             s = s * k
             c = b + s
-    return a,b,c
+    return a,b,c,i
 
 
 test_fun = lambda x: np.sin(x) - np.sin(10/3*x)
-interval = np.linspace(-1,1)
-a_test, b_test, c_test = bracketing(0,0.1,2,test_fun)
-print(a_test, b_test, c_test)
+interval = np.linspace(-3,1)
+a_test, b_test, c_test, i_run = bracketing(0,1,2,test_fun)
+
+print(f"a,b,c-values: {a_test:.4f}, {b_test:.4f}, {c_test:.4f}")
+print(f"Function calls:: {(i_run):.4f}")
 
 
-def sectioning(a, b, f, tol: float = 10e-6, max_steps: int = 10e3):
-    a_new = a
-    b_new = b
-    c = b - rho*(b-a)
-    d = a + rho*(b-a)
+def sectioning(a, b, c ,f, tol: float = 10e-3):
+
+    c_range = c - rho*(c-a)
+    a_range = a + rho*(c-a)
     
-    running = True
     counter = 0
-    
-    while running:
-        if f(c) < f(d):
-            b_new = d
-            d = c
-            c = b_new - rho*(b_new-a_new)
-        else:
-            a_new = c
-            c = d
-            d = a_new + rho*(b_new-a_new)
-        
-        if abs(a_new-b_new) < tol:
-            running = False
-            print("Threshold reached")
-            
-        if counter > max_steps:
-            running = False
-            print("Max. step reached")
-                    
-        counter += 1
-            
-    return (a_new+b_new)/2
 
-# test_sol = sectioning(a_test, c_test,test_fun, tol = 10e-5)
-# print(test_sol)
+    while state == True:
+        
+        plt.figure(dpi=400)
+        plt.plot(interval, test_fun(interval), 'ko-', linewidth=0.5, markersize = 2)
+        plt.scatter(a, f(a), s=30, c='r', label='A', marker='^')  
+        plt.scatter(c_range, f(c_range), s=60, c='b', label='B (c_range)', marker='*')  
+        plt.scatter(a_range, f(a_range), s=60, c='b', label='B (a_range)', marker='+')  
+        plt.scatter(c, f(c), s=30, c='g', label='C', marker='^')  
+        plt.legend()
+        plt.title(f'Bracketing - Iteration {i_run-1}, Sectioning - Counter {counter}')
+        
+        if f(c_range) < f(a_range):
+            c = a_range
+            a_range = c_range
+
+            c_range = c - rho*(c-a)
+        
+        else:
+            a = c_range
+            c_range = a_range
+            
+            a_range = a + rho*(c-a)
+        
+        if abs(a-c) < tol:
+            print("\nThreshold reached")
+            break
+             
+        counter += 1
+    
+    return (a-c), (a+c)/2, counter
+
+
+error, test_point, counter = sectioning(a_test, b_test, c_test,test_fun)
+print(f"Error: {np.abs(error):.4f}")
+print(f"Minimum x-value:: {test_point:.4f}")
+print(f"Function calls:: {(counter):.4f}")
+
+
+
 
 ############ CONTROL FUNCTIONS ################ 
 # Please do not change these functions as the #
