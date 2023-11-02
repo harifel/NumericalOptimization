@@ -1,171 +1,161 @@
-from typing import Callable, List, Tuple
-from dataclasses import dataclass
+from typing import Callable
 import numpy as np
-import matplotlib.pyplot as plt
-
-############ Solution functions ################
-# The function bodies in the following section #
-# are to be edited. The function input params  #
-# and return values along with the function    #
-# name must not change as well as the imports  #
-################################################
-
-############ Global variables #################
-
-rho: float = 0.61803398875
-
-############ Helper functions #################
-# Can be implemented here if needed.          #
-###############################################
-
-########### Main solution function : ##########
-
-def line_search(
-    f: Callable,
-    alpha0: float,
-    x0: np.ndarray,
-    g: np.ndarray,
-    s: float = 10e-2,
-    k: float = 2.0,
-    eps: float = 1e-2,
-) -> Tuple[float, float, int]:
-    """[summary]
-
-    Args:
-        f (Callable): Function to perform the line search on.
-        alpha0 (float): Initial step parameter.
-        x0 (np.ndarray): Starting position.
-        g (np.ndarray): Search direction.
-        s (float, optional): Line search step scalar. Defaults to 10e-2.
-        k (float, optional): Line search step expansion. Defaults to 2.0.
-        eps (float, optional): Termination condition eps. Defaults to 1e-2.
-
-    Returns:
-        Tuple[float, float, int]: bracket left, bracket right, number of function calls
-    """    
-    line_fun = lambda alpha: f(x0 + alpha*g)
-    
-    return a, b, f_calls
-
-def bracketing(a,s,k,f,g, max_it: float = 10e3):
-    """
-    Parameters
-    ----------
-    a : starting point
-    s : step size
-    k : step size increase
-    f : function to be minimized
-    g : search direction
-
-    Returns
-    -------
-    a : one bracket
-    c : second bracket
-
-    """
-    state = True
-    i = 0
-    a_array,b_array,c_array = [],[],[]
-
-    s0,a0 = s, np.copy(a)
-
-    for dim in range(np.size(a)):
-        
-        a, b, c = np.copy(a0), np.copy(a0), np.copy(a0)
-        
-        b[:,dim] = b[:,dim] + s*g[:,dim]
-        #define search direction g
-        # if f(a)>f(b):
-        #     pass
-        # else:
-        #     a,b = b,a
-        #     s = -s
-            
-        c[:,dim] += 2*s*g[:,dim]
-        
-        while state == True:
-            # plt.figure(dpi=400)
-            # plt.plot(interval, test_fun(interval), 'ko-', linewidth=0.5, markersize = 2)
-            # plt.scatter(a, test_fun(a), s=30, c='r', label='A', marker='^')  
-            # plt.scatter(b, test_fun(b), s=30, c='b', label='B', marker='^')  
-            # plt.scatter(c, test_fun(c), s=30, c='g', label='C', marker='^')  
-            # plt.legend()
-            # plt.title(f'Iteration {i}')
-            i +=1
-            if f(c) > f(b):
-                a_array.append(a[:,dim][0])
-                b_array.append(b[:,dim][0])
-                c_array.append(c[:,dim][0])
-                s = s0
-                break
-            else: 
-                a,b = np.copy(b), np.copy(b)
-                b = np.copy(c)
-                s = s * k
-                c[:,dim] += s*g[:,dim]
-            
-            if i > max_it:
-                state = False
-                
-        
-    return a_array,b_array,c_array
 
 
-test_fun = lambda x: np.sin(x[:,0]) - np.sin(10/3*x[:,0]) + np.sin(x[:,1]) - np.sin(10/3*x[:,1])
-#interval = np.linspace(-1,1)
-a_test, b_test, c_test = bracketing(np.array([[0,0]], dtype=np.float32),0.1,2,test_fun, np.array([[-1,-1]]))
-print(a_test, b_test, c_test)
+def print_available():
+    print("Available functions with gradients and hessians : \n")
+    print("  - rosenbrock (id=1) ndim = 2")
+    print("  - himmelblau (id=2) ndim = 2")
+    print("  - rastrigin (id=3) ndim = 2")
+    print("  - F6 (id=4) ndim = 1")
+    print("  - threehumpcamel (id=5) ndim = 2")
 
 
-def sectioning(a, b, f, tol: float = 10e-6, max_steps: int = 10e3):
-    
-    value1, value2 = [],[]
-    
-    
-    # unit_vec = np.array([[0]*np.size(a)])
-    # unit_vec[:,dim] = 1
-    a_new, b_new = np.array([a]), np.array([b])
+def test_function(fun_id):
 
-    c = b_new - rho*(b_new-a_new)
-    d = a_new + rho*(b_new-a_new)
-    
-    running = True
-    counter = 0
-    
-    while running:
-        if f(c) < f(d):
-            b_new = d
-            d = np.copy(c)
-            c = b_new - rho*(b_new-a_new)
-        else:
-            a_new = np.copy(c)
-            c = d
-            d = a_new + rho*(b_new-a_new)
-        
-        if np.all(abs(a_new-b_new) < tol):
-            running = False
-            print("Threshold reached")
+    f: Callable = None
+    g: Callable = None
+    H: Callable = None
+    n_x: int = None
+    limits: np.ndarray = None
+    obj: np.ndarray = None
+    x_opt: np.ndarray = None
 
-            
-        if counter > max_steps:
-            running = False
-            print("Max. step reached")
-                    
-        counter += 1
-            
-    return a_new,b_new
+    if fun_id == "rosenbrock" or fun_id == 1:
+        #  Rosenbrock's function
+        #   Minimum: f(1,1) = 0
+        f = lambda x: (1 - x[:, 0]) ** 2 + 100 * (x[:, 1] - x[:, 0] ** 2) ** 2
+        g = lambda x: np.array(
+            [
+                -400 * x[:, 0] * (x[:, 1] - x[:, 0] ** 2) - 2 * (1 - x[:, 0]),
+                200 * (x[:, 1] - x[:, 0] ** 2)
+            ]
+        )
+        H = lambda x: np.array(
+            [
+                (1200 * x[:, 0] ** 2 - 400 * x[:, 1] + 2)[0],
+                (-400 * x[:, 0])[0],
+                (-400 * x[:, 0])[0],
+                200,
+            ]
+        ).reshape(2, 2)
+        n_x = 2
+        limits = np.array([[-5, 5], [-5, 5]], dtype=float)
+        obj = 0
+        x_opt = np.array([[1, 1]])
 
+    elif fun_id == "himmelblau" or fun_id == 2:
+        #  Himmelblau's function
+        #   Minimum:  * f( 3,         2       ) = 0
+        #             * f(-2.805118,  3.131312) = 0
+        #             * f(-3.779310, -3.283186) = 0
+        #             * f( 3.584428, -1.848126) = 0
+        f = (
+            lambda x: (x[:, 0] ** 2 + x[:, 1] - 11) ** 2
+            + (x[:, 0] + x[:, 1] ** 2 - 7) ** 2
+        )
 
-sol = sectioning(a_test, c_test, test_fun)
-# test_sol = sectioning(a_test, c_test,test_fun, tol = 10e-5)
-# print(test_sol)
+        g = lambda x: np.array(
+            [
+                4 * x[:, 0] * (x[:, 0] ** 2 + x[:, 1] - 11)
+                + 2 * (x[:, 0] + x[:, 1] ** 2 - 7),
+                2 * (x[:, 0] ** 2 + x[:, 1] - 11)
+                + 4 * x[:, 1] * (x[:, 0] + x[:, 1] ** 2 - 7),
+            ]
+        )
 
-############ CONTROL FUNCTIONS ################ 
-# Please do not change these functions as the #
-# grading will not be possible.               #
-###############################################
+        H = lambda x: np.array(
+            [
+                [
+                    (12 * x[:, 0] ** 2 + 4 * x[:, 1] - 42)[0],
+                    (4 * x[:, 0] + 4 * x[:, 1])[0],
+                ],
+                [
+                    (4 * x[:, 0] + 4 * x[:, 1])[0],
+                    (4 * x[:, 0] + 12 * x[:, 1] ** 2 - 26)[0],
+                ],
+            ]
+        )
+        n_x = 2
+        # 'n_x' states
+        limits = np.array([[-5, 5], [-5, 5]], dtype=float)  # Boundaries
+        obj = np.zeros((4,))
+        # objective value (f(x_min) = obj)
+        x_opt = np.array(
+            [
+                [3, 2],
+                [-2.805118, 3.131312],
+                [-3.779310, -3.283186],
+                [3.584428, -1.848126],
+            ]
+        )
+    elif fun_id == "rastrigin" or fun_id == 3:
+        #  Rastrigin function
+        #   Minimum:  f(0,0) = 0
+        f = (
+            lambda x: 20
+            + (x[:, 0] ** 2 + x[:, 1] ** 2)
+            - 10 * (np.cos(2 * np.pi * x[:, 0]) + np.cos(2 * np.pi * x[:, 1]))
+        )
 
-def get_test_fun_list() -> List[Callable]:
-    return [line_search]
+        g = lambda x: np.array(
+            [
+                2 * x[:, 0] + 20 * np.pi * np.sin(2 * np.pi * x[:, 0]),
+                2 * x[:, 1] + 20 * np.pi * np.sin(2 * np.pi * x[:, 1]),
+            ]
+        )
 
+        H = lambda x: np.array(
+            [
+                [(2 + 40 * np.pi ** 2 * np.cos(2 * np.pi * x[:, 0]))[0], 0],
+                [0, (2 + 40 * np.pi ** 2 * np.cos(2 * np.pi * x[:, 1]))[0]],
+            ]
+        )
+        n_x = 2  # 'n_x' states
+        limits = np.array([[-5, 5], [-5, 5]], dtype=float)  # Boundaries
+        obj = 0  # objective value (f(x_min) = obj)
+        x_opt = np.array([[0.0, 0.0]])
 
+    elif fun_id == "F6" or fun_id == 4:
+        #  F6 function.
+        #  Minimum: f(9.6204) = -100.22
+        f = lambda x: (x ** 2 + x) * np.cos(x)
+        g = lambda x: (2 * x + 1) * np.cos(x) - (x ** 2 + x) * np.sin(x)
+        H = (
+            lambda x: 2 * np.cos(x)
+            - (2 * x + 1) * np.sin(x)
+            - (2 * x + 1) * np.sin(x)
+            - (x ** 2 + x) * np.cos(x)
+        )
+        n_x = 1  # 'n_x' states
+        limits = np.array([-10.0, 10.0])  # Boundaries
+        obj = -100.22  # objective value (f(x_min) = obj)
+        x_opt = 9.6204
+
+    elif fun_id == "threehumpcamel" or fun_id == 5:
+        #  Three hump camel function
+        #  Minimum: f(0,0) = 0
+        f = (
+            lambda x: 2 * x[:, 0] ** 2
+            - 1.05 * x[:, 0] ** 4
+            + x[:, 0] ** 6 / 6
+            + x[:, 0] * x[:, 1]
+            + x[:, 1] ** 2
+        )
+        g = lambda x: np.array(
+            [
+                x[:, 0] ** 5 + 4 * x[:, 0] + x[:, 1] - 4.2 * x[:, 0] ** 3,
+                x[:, 0] + 2 * x[:, 1],
+            ],
+            dtype=float,
+        )
+        H = lambda x: np.array(
+            [[(5 * x[:, 0] ** 4 - 12.6 * x[:, 0] ** 2 + 4)[0], 1], [1, 2]]
+        )
+        n_x = 2  # 'n_x' states
+        limits = np.array([[-4.0, 4.0], [-4.0, 4.0]])  # Boundaries
+        obj = 0.0
+        # objective value (f(x_min) = obj)
+        x_opt = np.array([[0.0, 0.0]])
+
+    return f, g, H, n_x, limits, obj, x_opt
