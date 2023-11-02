@@ -135,9 +135,6 @@ def sectioning(a, b, f, tol: float = 10e-6, max_steps: int = 10e3):
     
     value1, value2 = [],[]
     
-    
-    # unit_vec = np.array([[0]*np.size(a)])
-    # unit_vec[:,dim] = 1
     a_new, b_new = np.array([a]), np.array([b])
 
     c = b_new - rho*(b_new-a_new)
@@ -191,3 +188,5 @@ print(f"check square: x_1 = {a_new[0,0]**2:.4f}, x2 =  {a_new[0,1]:.4f}")
 
 def get_test_fun_list() -> List[Callable]:
     return [line_search]
+
+
