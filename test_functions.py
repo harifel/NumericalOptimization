@@ -158,7 +158,7 @@ def test_function(fun_id):
         # objective value (f(x_min) = obj)
         x_opt = np.array([[0.0, 0.0]])
 
-    return f, g, H, n_x, limits, obj, x#_opt
+    return f, g, H, n_x, limits, obj, x_opt
 
 
 
