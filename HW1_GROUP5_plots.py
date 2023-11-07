@@ -177,34 +177,36 @@ print(f"s = 1, k = 4, f(a) = {test_fun(a)}, f(b) = {test_fun(b)}, a = {a}, b = {
 
 
 # Get the 2D test function : 
-f = tf.test_function(2)[0]
+f = tf.test_function(1)[0]
 # (1) ... Rosenbrock function, (2) ... Himmelblau function, (3) ... Rastrigin function
 
 # Define the starting point, search direction, and call line_search
 x0 = np.array([[3, -2]])
-g = np.array([[-1, -1]])
+g = np.array([[-1, 1]])
 
 alpha0 = 0
 a,b, f_calls = line_search(alpha0=alpha0, x0=x0, g=g, s=1, k=2, f = f)
 
 
 # Take the mean value of the bounds as the optimal distance
-α = 0.5*(a + b)
+alpha = 0.5*(a + b)
+
+
 
 # Now I know the distance, but not the solution in the 2D parameter space! -->
 # Starting point of the line search (if α0 is not 0)
 X0 = x0 + alpha0*g
 
 # Minimizer x*
-Xs = x0 + α*g 
-print('minimum found at α =', a, 'thus at point x* = ', Xs)
+Xs = x0 + alpha*g 
+print('minimum found at α =', alpha, 'thus at point x* = ', Xs, "with the corresponding function values f(α) = ", f(Xs))
 
 
 fig, ax = plt.subplots(figsize=(8,6), dpi=400)
 x = np.linspace(-6,6,50)
 xx, yy = np.meshgrid(x,x)
 zz = f(np.column_stack((xx.flatten(), yy.flatten())))
-cf = ax.contourf(xx, yy, zz.reshape(xx.shape), levels=np.linspace(0, 500, 1000), cmap="rainbow")
+cf = ax.contourf(xx, yy, zz.reshape(xx.shape), levels=np.linspace(0, 10000, 1000), cmap="rainbow")
 
 ax.set_xlabel('x')
 ax.set_ylabel('y')
@@ -212,12 +214,12 @@ ax.set_ylabel('y')
 plt.colorbar(cf)
 
 
-α_v = np.linspace(-3,3,50)
+α_v = np.linspace(-3,6,50)
 X = α_v[:,None]*g + x0
 ax.plot(X[:,0],X[:,1],'black',label="Search direction")
 
 ax.scatter(x0[0,0], x0[0,1],marker="s",label="Start point",s=50,color='red')
-ax.scatter(Xs[0,0], Xs[0,1],marker="s",label="End point",s=50,color='yellow')
+ax.scatter(Xs[0,0], Xs[0,1],marker="s",label="End point (Optimal point)",s=50,color='yellow')
 ax.legend()
 
 plt.savefig("contour_plot.png", dpi=400)
@@ -226,7 +228,7 @@ plt.savefig("contour_plot.png", dpi=400)
 yav = f(X)
 fig = plt.figure(dpi = 400)
 pyplot.plot(α_v,yav,'r',label="function values along search direction")
-pyplot.scatter(α,f(x0+α*g),marker="s",label="minimum found",s=50)
+pyplot.scatter(alpha,f(x0+alpha*g),marker="s",label="minimum found",s=50)
 pyplot.xlabel('α') 
 pyplot.ylabel('objective function value f(α)')
 pyplot.legend(); pyplot.grid()
@@ -242,10 +244,10 @@ ax.set_zlabel('z');
 
 ax.plot(X[:,0],X[:,1],0,'black',label="Search direction")
 ax.scatter(x0[0,0], x0[0,1], 0,marker="s",label="Start point",s=50,color='red')
-ax.scatter(Xs[0,0], Xs[0,1], 0, marker="s",label="End point",s=50,color='yellow')
+ax.scatter(Xs[0,0], Xs[0,1], 0, marker="s",label="End point (Optimal point)",s=50,color='yellow')
 ax.legend()
 
-ax.view_init(60, 310)
+ax.view_init(15, 290)
 plt.savefig("3Dplot.png", dpi=400)
 
 ############ CONTROL FUNCTIONS ################
