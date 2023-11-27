@@ -1,6 +1,10 @@
 from typing import Callable, List, Tuple
 import numpy as np
 
+
+
+
+
 def print_available():
     print("Available functions with gradients and hessians : \n")
     print("  - rosenbrock (id=1) ndim = 2")
@@ -168,11 +172,23 @@ def test_function(fun_id):
     return f, g, H, n_x, limits, obj, x_opt
 
 
-############ Global variables #################
-
-rho: float = 0.61803398875
-
 ############ Previously implemented functions #################
+############ Global variables #################
+rho: float = 0.61803398875
+state: str = True
+############ Helper functions #################
+def CalculateJacobian(model, x0, h):
+    model_x0 = model(x0)
+    dim = (np.shape(model_x0)[0], np.shape(x0)[0])
+    J = np.zeros(dim)
+    for xi in range(len(x0)):
+        x0_der = x0.copy()
+        x0_der[xi] = x0_der[xi] + h
+        J[:,xi] = (model(x0_der) - model_x0)[:,0]/h
+    return J
+    
+    
+
 
 def bracketing(
         a: float,
@@ -183,8 +199,6 @@ def bracketing(
         ):
     b = a + s
     i = 1
-    
-    state = True
 
     if f(a)>f(b):
         pass
@@ -213,13 +227,13 @@ def sectioning(
         b: float,
         c: float,
         f: Callable,
-        tol: float = 10e-3,
+        tol: float = 1e-10,
         max_it: float = 10e3,
         ):
 
     c_range = c - rho*(c-a)
     a_range = a + rho*(c-a)
-    state = True
+
     counter = 1
 
     while state == True:
@@ -241,9 +255,8 @@ def sectioning(
             break
         counter += 1
     return a,c,counter
-
-
-# Line search function :
+###############################################
+########### Main solution function : ##########
 def line_search(
     f: Callable,
     alpha0: float,
@@ -252,20 +265,32 @@ def line_search(
     s: float = 10e-2,
     k: float = 2.0,
     eps: float = 1e-2,
-):
-    ##### Write your code here (Values below just as placeholders if the 
-    # function in question is not implemented by you for some reason, make sure
-    # that you leave such a definition since the grading wont work. ) #####
-    #a = b = f_c1 = f_c2 = 0
+) -> Tuple[float, float, int]:
+    """[summary]
+
+    Args:
+        f (Callable): Function to perform the line search on.
+        alpha0 (float): Initial step parameter.
+        x0 (np.ndarray): Starting position.
+        g (np.ndarray): Search direction.
+        s (float, optional): Line search step scalar. Defaults to 10e-2.
+        k (float, optional): Line search step expansion. Defaults to 2.0.
+        eps (float, optional): Termination condition eps. Defaults to 1e-2.
+
+    Returns:
+        Tuple[float, float, int]: bracket left, bracket right, number of function calls
+    """
+
     line_fun = lambda alpha: f(x0 + alpha*g)
 
     a, b, c, i_run = bracketing(alpha0,s,k,line_fun)
-    a,b, counter = sectioning(a, b, c,line_fun)
+    a,c, counter = sectioning(a, b, c,line_fun)
 
-    return a, b, i_run + counter
+    f_calls = i_run + counter
 
 
-############ Helper functions #################
+    return a,c, f_calls
+############ CO
 
 
 ############ Solution functions ###############
@@ -277,7 +302,7 @@ def gradient_descent(
     g: Callable[[np.ndarray], np.ndarray],
     x0: np.ndarray,
     s: float = 2e-4,
-    eps: float = 1e-2,
+    eps: float = 1e-8,
 ) -> Tuple[np.ndarray, np.ndarray, int, int]:
     """Implementation of gradient descent algorithm.
 
@@ -306,15 +331,22 @@ def gradient_descent(
     fc = gc = 0 
     
     x_opt = np.copy(x0)
+    counter = 0
     
-    while np.all(np.abs(g(x_opt))) < eps:
+    while  np.any(np.abs(g(x_opt)) > eps) and counter < 10000:
+        print(g(x_opt))
+        #print(f(x_opt))
+        #print(x_opt)
         d = -g(x_opt)
-        a,b,run = line_search(f, alpha0 = 1, x0 = x0, g = d, s = s, eps = eps)
+        a,b,run = line_search(f, alpha0 = 0, x0 = x0, g = d, s = s, eps = eps)
+        print('a =', a, 'b = ', b)
         alpha = (a+b)/2
-        x_opt += alpha*d
-        x_steps.append(x_opt)
+        x_opt = x_opt + alpha*d
+        x_steps.append(x_opt.copy())
         gc += 1 
         fc += run
+        counter += 1
+        print(counter)
     
     return x_opt, x_steps, fc, gc
 
@@ -343,13 +375,31 @@ def gauss_newton(
         int: number of forward function calls.
     """
 
+    
+    
     ##### Write your code here (Values below just as placeholders if the 
     # function in question is not implemented by you for some reason, make sure
     # that you leave such a definition since the grading wont work. ) #####
-    # x_steps = [x0]
-    # x_opt = x0.copy()
-    # n_iter = 0
-
+    x_steps = [x0]
+    x_opt = x0.copy()
+    n_iter = 0
+    state = True
+    
+    while state == True:
+        J = CalculateJacobian(f, x_opt, h)
+        J_T = J.T
+        r = - y + f(x_opt)
+        x_opt = x_opt - np.linalg.inv(J_T@J)@J_T@r
+        
+        if n_iter > N_max:
+            state = False
+        if np.all(abs(x_opt - x_steps[n_iter]))<eps:
+            state = False    
+        
+        x_steps.append(x_opt)
+        n_iter += 1 
+        
+        
     return x_opt, x_steps, n_iter
 
 
@@ -474,17 +524,45 @@ def levenberg_marquardt(
 # x_opt, x_steps, nit = levenberg_marquardt(testgrad, testhess, np.array([15,5], dtype = np.float64), nu = 0)
 
 ## TEST OF NEWTON FUNCTION
-f,g,H = test_function(1)[:3]
-x0 = np.array([[0,-1]]).T
-xs,xstep,n_iter = newton(g,H,x0)
-print('optimum at x =[', xs[0,0],',', xs[1,0], ']')
+# f,g,H = test_function(1)[:3]
+# x0 = np.array([[0,-1]]).T
+# xs,xstep,n_iter = newton(g,H,x0)
+# print('optimum at x =[', xs[0,0],',', xs[1,0], ']')
 
 
-## TEST OF LEVENBERG FUNCTION
-f,g,H = test_function(2)[:3]
-x0 = np.array([[0.75,-1.25]]).T
-xs,xstep,n_iter = levenberg_marquardt(g,H,x0, nu = 50)
-print('optimum at x =[', xs[0,0],',', xs[1,0], ']')
+# ## TEST OF LEVENBERG FUNCTION
+# f,g,H = test_function(2)[:3]
+# x0 = np.array([[0.75,-1.25]]).T
+# xs,xstep,n_iter = levenberg_marquardt(g,H,x0, nu = 50)
+# print('optimum at x =[', xs[0,0],',', xs[1,0], ']')
+
+## TEST OF GRADIENT DESCENT'
+# f,g = test_function(1)[:2]
+# #f = lambda x: np.sin(x) - np.sin(10/3*x)
+# #g = lambda x: np.cos(x) - np.cos(10/3*x)*10/3
+
+# #f = lambda x: x[0,:]**2 + x[1,:]**2
+# #g = lambda x: np.array([2*x[0,:]**1 , 2*x[1,:]**1])
+# x0 = np.array([[3,-2]], dtype = np.float64).T
+# x_opt, x_steps, fc, gc = gradient_descent(f, g, x0, s = 1e-10)
+# a,b,run = line_search(f, alpha0 = 0, x0 = x0, g = g(x0))
+
+
+## TESTING GAUSS NEWTON METHODE
+import scipy.io as sio
+import matplotlib.pyplot as plt
+I = sio.loadmat(r"C:\Users\bened\Desktop\Numerical Optimization\HW2_files\HW-2\I_m.mat")["I_m"].T
+f = np.logspace(1, 6, len(I))[:,None]
+omega = 2*np.pi*f
+model = lambda x: np.abs(1/(x[0]+ 1j*(omega*x[1]-1/(omega*x[2]))))
+x0 = np.array([[0.5],[2e-3],[3e-6]]) # scaled values, R=x(0), L=x(1).10^-3, C=x(2).10^-
+xs, xsteps, fc = gauss_newton(model, x0.copy(), np.abs(I), N_max=1_000, h = 1e-8)
+
+fig, ax = plt.subplots(figsize=((9,7)))
+ax.scatter(f, abs(I),label='measurements, y')
+ax.set_xscale('log'); plt.xlabel('f');plt.ylabel('abs(I)'); plt.title('Resonance curve of a series reson')
+ax.plot(f, model(xs),color="grey",label='model, F(x)')
+ax.legend()
 
 ########### CONTROL FUNCTIONS ################
 
