@@ -13,6 +13,12 @@ def print_available():
     print("  - F6 (id=4) ndim = 1")
     print("  - threehumpcamel (id=5) ndim = 2")
 
+############ Previously implemented functions #################
+############ Global variables #################
+rho: float = 0.61803398875
+state: str = True
+############ Helper functions #################
+
 def cx(x):
 
     if len(x.shape) == 1:
@@ -171,12 +177,6 @@ def test_function(fun_id):
 
     return f, g, H, n_x, limits, obj, x_opt
 
-
-############ Previously implemented functions #################
-############ Global variables #################
-rho: float = 0.61803398875
-state: str = True
-############ Helper functions #################
 def CalculateJacobian(model, x0, h):
     model_x0 = model(x0)
     dim = (np.shape(model_x0)[0], np.shape(x0)[0])
@@ -188,8 +188,6 @@ def CalculateJacobian(model, x0, h):
     return J
     
     
-
-
 def bracketing(
         a: float,
         s: float,
@@ -290,8 +288,6 @@ def line_search(
 
 
     return a,c, f_calls
-############ CO
-
 
 ############ Solution functions ###############
 ############ FIRST ORDER METHODS ##############
@@ -435,11 +431,12 @@ def newton(
     # x_opt = x0.copy()
     # n_iter = 0
     
-    x_steps = []
+    x_steps = [x0]
     n_iter = 0
     
     condition = True
-    x_old = x_opt = x0.copy()
+    x_old = x0.copy()
+    x_opt = x0.copy()
 
     
     while condition is True:
@@ -449,12 +446,11 @@ def newton(
         if n_iter > N_max:
             condition = False
             print('Max iteration reached')
-        if np.all(np.abs(x_opt-x_old) < eps):
-            if all(np.linalg.eigvals(G_xold)>0):
-                condition = False
-                print('Convergence limit reached')
+        if np.linalg.norm(g(x_opt)) < eps:
+            condition = False
+            print('Convergence limit reached')
             
-        x_steps.append(x_opt) 
+        x_steps.append(x_opt.copy()) 
         x_old = x_opt.copy()
         n_iter += 1
 
@@ -490,65 +486,46 @@ def levenberg_marquardt(
     # x_opt = x0.copy()
     # n_iter = 0
     G_x0 = G(x0)
-    # D = D_inv = np.zeros(G_x0.shape)
-    # for i in range(G_x0.shape[1]):
-    #     d_i =  np.sqrt(G_x0[i,:].sum())
-    #     D[i,i] = d_i
-    #     D_inv[i,i] = 1/d_i
-    # X_0 = D@G_x0@D + nu*np.identity(G_x0.shape[1])
-    # b_0 =   D_inv@g(x0)
+    condition = False
     
-    #p_0 = -D@(np.linalg.inv(X_0)@b_0)
+    while not condition:
+        if np.all(np.linalg.eigvals(G_x0+nu*np.identity(G_x0.shape[1])) > 0):
+            condition = True
+        else:
+            nu *= 2
+    
     G_new = lambda x: G(x) + nu*np.identity(G_x0.shape[1])
-    p_0 = np.linalg.inv(G_x0+nu*np.identity(G_x0.shape[1]))@x0
+
+    p_0 = np.linalg.inv(G_x0)@x0
     x1 = x0 + p_0
     
     x_opt, x_steps, n_iter = newton(g,G_new,x1)
     
-
     return x_opt, x_steps, n_iter
 
 
-#f,g,_,_,_,_,_ = test_function(1)
+### TESTING NEWTON METHOD ####################
+f1, g1, H1 = test_function(1)[:3]
+x_opt, x_steps, n_iter = newton(g1, H1, x0=np.array([[0.75, -1.25]]).T, eps = 1e-3)
 
-#x_test, test_steps, fc,gc = gradient_descent(f,g,np.array([[1],[1]]))
-#
+f2 = lambda x: x[0,:]**4 + x[1,:]*x[0,:] + (1+x[1,:])**2 
+g2 = lambda x: np.array([4*x[0,:]**3 + x[1,:], x[0,:]+2+2*x[1,:]])
+H2 = lambda x: np.array(
+    [
+    [    12*x[0,:][0]**2, 1], 
+    [               1, 2]
+    ]
+    )
 
-# testgrad = lambda x: np.array([3*x[0]**2, 2*x[1]])
-# testhessian = lambda x: np.array([[6*x[0],0],[0,2]])
-# x_opt, x_steps, nit = newton(testgrad, testhessian, np.array([-15,-5], dtype = np.float64))
-
-# testgrad = lambda x: np.array([4*x[0]**3+x[1], x[0]+2*(1+x[1])])
-# testhess = lambda x: np.array([[4*x[0]**2, 1], [1,2]])
-
-# x_opt, x_steps, nit = levenberg_marquardt(testgrad, testhess, np.array([15,5], dtype = np.float64), nu = 0)
-
-## TEST OF NEWTON FUNCTION
-# f,g,H = test_function(1)[:3]
-# x0 = np.array([[0,-1]]).T
-# xs,xstep,n_iter = newton(g,H,x0)
-# print('optimum at x =[', xs[0,0],',', xs[1,0], ']')
+x_opt, x_steps, n_iter = newton(g2, H2, x0=np.array([[0,0]]).T, eps = 1e-3)
 
 
-# ## TEST OF LEVENBERG FUNCTION
-# f,g,H = test_function(2)[:3]
-# x0 = np.array([[0.75,-1.25]]).T
-# xs,xstep,n_iter = levenberg_marquardt(g,H,x0, nu = 50)
-# print('optimum at x =[', xs[0,0],',', xs[1,0], ']')
-
-## TEST OF GRADIENT DESCENT'
-# f,g = test_function(1)[:2]
-# #f = lambda x: np.sin(x) - np.sin(10/3*x)
-# #g = lambda x: np.cos(x) - np.cos(10/3*x)*10/3
-
-# #f = lambda x: x[0,:]**2 + x[1,:]**2
-# #g = lambda x: np.array([2*x[0,:]**1 , 2*x[1,:]**1])
-# x0 = np.array([[3,-2]], dtype = np.float64).T
-# x_opt, x_steps, fc, gc = gradient_descent(f, g, x0, s = 1e-10)
-# a,b,run = line_search(f, alpha0 = 0, x0 = x0, g = g(x0))
+### Levenberg ####
+x_opt, x_steps, n_iter = levenberg_marquardt(g2, H2, x0=np.array([[0,0]]).T, eps = 1e-3)
 
 
-## TESTING GAUSS NEWTON METHODE
+
+# ## TESTING GAUSS NEWTON METHODE
 import scipy.io as sio
 import matplotlib.pyplot as plt
 I = sio.loadmat(r"C:\Users\bened\Desktop\Numerical Optimization\HW2_files\HW-2\I_m.mat")["I_m"].T
