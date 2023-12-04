@@ -1,7 +1,8 @@
 from typing import Callable, List, Tuple
 import numpy as np
 from numpy.linalg import norm
-
+import test_functions as tf
+import matplotlib.pyplot as plt
 
 ############ Global variables #################
 rho: float = 0.61803398875
@@ -199,6 +200,24 @@ def gauss_newton(
     x_steps = [x0]
     x_opt = x0.copy()
     n_iter = 0
+    
+
+    state = True
+    
+    while state == True:
+        J = CalculateJacobian(f, x_opt, h)
+        J_T = J.T
+        r = - y + f(x_opt)
+        x_opt = x_opt - np.linalg.inv(J_T@J)@J_T@r
+        
+        if n_iter > N_max:
+            state = False
+        if np.all(abs(x_opt - x_steps[n_iter]))<eps:
+            state = False    
+        
+        x_steps.append(x_opt)
+        n_iter += 1 
+    
 
     return x_opt, x_steps, n_iter
 
@@ -236,7 +255,7 @@ def newton(
 
     while state_imp:
         n_iter += 1
-        p = np.dot(np.linalg.inv(G(x_opt)), g(x_opt)).reshape(1, 2)
+        p = np.linalg.solve(G(x_opt), g(x_opt)).reshape(1, 2)
         x_opt = x_opt - p
         x_steps.append(x_opt)
 
@@ -244,7 +263,7 @@ def newton(
             print('Max. iterations reached!')
             break
 
-        elif np.linalg.norm(g(x_opt)) < eps and np.all(np.linalg.eigvals(G(x0))):
+        elif np.linalg.norm(g(x_opt)) < eps and np.any(np.linalg.eigvals(G(x0))):
             print("Convergence reached!")
             break
 
@@ -283,47 +302,44 @@ def levenberg_marquardt(
     x_opt = x0.copy()
     n_iter = 1
     nu_default = nu
+    
 
-    while np.linalg.norm(g(x_opt)) >= eps:
+    while np.linalg.norm(g(x_opt)) > eps:
+        
         Hessian = G(x_opt)
-        eigvals = np.linalg.eigvals(Hessian)
-
+        eigvals = np.linalg.eigvals(G(x_opt))
         nu = nu_default
 
-        while np.all(eigvals < 0):
-            Hessian = Hessian + nu * np.eye(len(Hessian))
+        while np.any(eigvals<0):
+            
+            Hessian = G(x_opt) + nu * np.eye(len(G(x_opt)))
             eigvals = np.linalg.eigvals(Hessian)
-            nu *= 2
-
-        n_iter += 1
-        p = np.dot(np.linalg.inv(Hessian), g(x_opt)).reshape(1, 2)
+            
+            if np.all(eigvals>0):
+                break
+            else:
+                nu *= 2
+            
+        p = np.linalg.solve(Hessian, g(x_opt)).T
         x_opt = x_opt - p
         x_steps.append(x_opt)
+        n_iter += 1
 
         if n_iter == N_max:
             print('Max. iterations reached!')
             break
 
-    print("Convergence reached!")
-
-
     return x_opt, x_steps, n_iter
 
-
-
-# import scipy.io as sio
-# I = sio.loadmat("I_m.mat")["I_m"].T
-# f = np.logspace(1, 6, len(I))[:,None]
-
-# x0 = np.array([[0.5],[0.2],[0.3]]) # scaled values, R=x(0), L=x(1).10^-3, C=x(2).10^-6
-# # xs, xsteps, fc = gauss_newton(model_eq, x0.copy(), np.abs(I),  N_max=1_000)[:3]
-# #print(xs)
-
-# fig, ax = plt.subplots(figsize=((9,7)))
-# ax.scatter(f, abs(I),label='measurements, y')
-# ax.set_xscale('log'); plt.xlabel('f');plt.ylabel('abs(I)'); plt.title('Resonance curve of a series resonant circuit')
-# # ax.plot(f, model_eq(xsteps[:][3]),color="grey",label='model, F(x)')
-# ax.legend()
+def CalculateJacobian(model, x0, h):
+    model_x0 = model(x0)
+    dim = (np.shape(model_x0)[0], np.shape(x0)[0])
+    J = np.zeros(dim)
+    for xi in range(len(x0)):
+        x0_der = x0.copy()
+        x0_der[xi] = x0_der[xi] + h
+        J[:,xi] = (model(x0_der) - model_x0)[:,0]/h
+    return J
 
 
 def get_test_fun_list() -> List[Callable]:
