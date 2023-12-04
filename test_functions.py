@@ -40,7 +40,7 @@ def test_function(fun_id):
             ]
         ).reshape(2, 2)
         n_x = 2
-        limits = np.array([[-5, 5], [-5, 5]], dtype=np.float)
+        limits = np.array([[-5, 5], [-5, 5]])
         obj = 0
         x_opt = np.array([[1, 1]])
 
@@ -78,7 +78,7 @@ def test_function(fun_id):
         )
         n_x = 2
         # 'n_x' states
-        limits = np.array([[-5, 5], [-5, 5]], dtype=np.float)  # Boundaries
+        limits = np.array([[-5, 5], [-5, 5]])  # Boundaries
         obj = np.zeros((4,))
         # objective value (f(x_min) = obj)
         x_opt = np.array(
@@ -112,7 +112,7 @@ def test_function(fun_id):
             ]
         )
         n_x = 2  # 'n_x' states
-        limits = np.array([[-5, 5], [-5, 5]], dtype=np.float)  # Boundaries
+        limits = np.array([[-5, 5], [-5, 5]])  # Boundaries
         obj = 0  # objective value (f(x_min) = obj)
         x_opt = np.array([[0.0, 0.0]])
 
@@ -160,7 +160,3 @@ def test_function(fun_id):
 
     return f, g, H, n_x, limits, obj, x_opt
 
-
-
-
-test_function(2)

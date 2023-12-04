@@ -33,7 +33,7 @@ def bracketing(
         ):
     b = a + s
     i = 1
-
+    print(f(a))
     if f(a)>f(b):
         pass
     else:
@@ -143,32 +143,32 @@ def line_search(
 
     return a,c, f_calls
 
-test_fun = lambda x: np.sin(x) - np.sin(10/3*x)
-interval = np.linspace(0,0.5)
-a,b, f_calls = line_search(x0 = 0.0, alpha0 = 0, g = 1, s = 0.01, k = 2, f = test_fun)
-print(f"s = 0.01, k = 2, f(a) = {test_fun(a)}, f(b) = {test_fun(b)}, a = {a}, b = {b}, b-a = {b-a}, function calls = {f_calls} ")
+# test_fun = lambda x: np.sin(x) - np.sin(10/3*x)
+# interval = np.linspace(0,0.5)
+# a,b, f_calls = line_search(x0 = 0.0, alpha0 = 0, g = 1, s = 0.01, k = 2, f = test_fun)
+# print(f"s = 0.01, k = 2, f(a) = {test_fun(a)}, f(b) = {test_fun(b)}, a = {a}, b = {b}, b-a = {b-a}, function calls = {f_calls} ")
 
 
-a,b, f_calls = line_search(x0 = 0.0, alpha0 = 0, g = 1, s = 0.1, k = 2, f = test_fun)
-print(f"s = 0.1, k = 2, f(a) = {test_fun(a)}, f(b) = {test_fun(b)}, a = {a}, b = {b}, b-a = {b-a}, function calls = {f_calls} ")
-
-
-
-a,b, f_calls = line_search(x0 = 0.0, alpha0 = 0, g = 1, s = 1, k = 2, f = test_fun)
-print(f"s = 1, k = 2, f(a) = {test_fun(a)}, f(b) = {test_fun(b)}, a = {a}, b = {b}, b-a = {b-a}, function calls = {f_calls} ")
-
-
-a,b, f_calls = line_search(x0 = 0.0, alpha0 = 0, g = 1, s = 0.01, k = 4, f = test_fun)
-print(f"s = 0.01, k = 4, f(a) = {test_fun(a)}, f(b) = {test_fun(b)}, a = {a}, b = {b}, b-a = {b-a}, function calls = {f_calls} ")
-
-
-a,b, f_calls = line_search(x0 = 0.0, alpha0 = 0, g = 1, s = 0.1, k = 4, f = test_fun)
-print(f"s = 0.1, k = 4, f(a) = {test_fun(a)}, f(b) = {test_fun(b)}, a = {a}, b = {b}, b-a = {b-a}, function calls = {f_calls} ")
+# a,b, f_calls = line_search(x0 = 0.0, alpha0 = 0, g = 1, s = 0.1, k = 2, f = test_fun)
+# print(f"s = 0.1, k = 2, f(a) = {test_fun(a)}, f(b) = {test_fun(b)}, a = {a}, b = {b}, b-a = {b-a}, function calls = {f_calls} ")
 
 
 
-a,b, f_calls = line_search(x0 = 0.0, alpha0 = 0, g = 1, s = 1, k = 4, f = test_fun)
-print(f"s = 1, k = 4, f(a) = {test_fun(a)}, f(b) = {test_fun(b)}, a = {a}, b = {b}, b-a = {b-a}, function calls = {f_calls} ")
+# a,b, f_calls = line_search(x0 = 0.0, alpha0 = 0, g = 1, s = 1, k = 2, f = test_fun)
+# print(f"s = 1, k = 2, f(a) = {test_fun(a)}, f(b) = {test_fun(b)}, a = {a}, b = {b}, b-a = {b-a}, function calls = {f_calls} ")
+
+
+# a,b, f_calls = line_search(x0 = 0.0, alpha0 = 0, g = 1, s = 0.01, k = 4, f = test_fun)
+# print(f"s = 0.01, k = 4, f(a) = {test_fun(a)}, f(b) = {test_fun(b)}, a = {a}, b = {b}, b-a = {b-a}, function calls = {f_calls} ")
+
+
+# a,b, f_calls = line_search(x0 = 0.0, alpha0 = 0, g = 1, s = 0.1, k = 4, f = test_fun)
+# print(f"s = 0.1, k = 4, f(a) = {test_fun(a)}, f(b) = {test_fun(b)}, a = {a}, b = {b}, b-a = {b-a}, function calls = {f_calls} ")
+
+
+
+# a,b, f_calls = line_search(x0 = 0.0, alpha0 = 0, g = 1, s = 1, k = 4, f = test_fun)
+# print(f"s = 1, k = 4, f(a) = {test_fun(a)}, f(b) = {test_fun(b)}, a = {a}, b = {b}, b-a = {b-a}, function calls = {f_calls} ")
 
 
 
