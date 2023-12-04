@@ -282,10 +282,13 @@ def levenberg_marquardt(
     x_steps = [x0]
     x_opt = x0.copy()
     n_iter = 1
+    nu_default = nu
 
     while np.linalg.norm(g(x_opt)) >= eps:
         Hessian = G(x_opt)
         eigvals = np.linalg.eigvals(Hessian)
+
+        nu = nu_default
 
         while np.all(eigvals < 0):
             Hessian = Hessian + nu * np.eye(len(Hessian))
