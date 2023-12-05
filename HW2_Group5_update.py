@@ -264,9 +264,6 @@ def gauss_newton(
 
     return x_opt, x_steps, n_iter, xs
 
-# ## TESTING GAUSS NEWTON METHODE
-
-
 ############ SECOND ORDER METHODS #############
 def newton(
     g: Callable[[np.ndarray], np.ndarray],
