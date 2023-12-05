@@ -85,7 +85,6 @@ def sectioning(
 
     return a,c,counter
 
-
 # Line search function :
 def line_search(
     f: Callable,
@@ -169,7 +168,6 @@ def gradient_descent(
 
     return x_opt, x_steps, fc, gc
 
-
 def gauss_newton(
     f: Callable[[np.ndarray], np.ndarray],
     x0: np.ndarray,
@@ -193,33 +191,80 @@ def gauss_newton(
         np.ndarray: list of steps the method takes to the optimal point (last one must be the optimal point from return 1).
         int: number of forward function calls.
     """
-
-    ##### Write your code here (Values below just as placeholders if the
-    # function in question is not implemented by you for some reason, make sure
-    # that you leave such a definition since the grading wont work. ) #####
+    x0 = np.abs(x0)
+    x0[1] *= 1e-3
+    x0[2] *= 1e-6
+ 
     x_steps = [x0]
     x_opt = x0.copy()
-    n_iter = 0
+    n_iter = 1
     
-
     state = True
     
+    def CalculateJacobian(model, x0, h):
+        model_x0 = model(x0)
+        J = np.zeros((len(model_x0), len(x0)))
+        
+        for xi in range(len(x0)):
+            x0_left = x0.copy()
+            x0_right = x0.copy()
+            x0_left[xi] = x0_left[xi] + h/2
+            x0_right[xi] = x0_right[xi] - h/2
+            J[:,xi] = (model(x0_left) - model(x0_right))[:,0]/h
+        return J
+      
+    def analytical_jacobian(x, f):
+        R, L, C = x[0], x[1], x[2]
+        jacobian = np.zeros((len(f), len(x)), dtype=np.complex128)
+    
+        # Partial derivative with respect to R (x[0])
+        jacobian[:, 0] = -(2 * np.pi * f[:, 0] * C) / (R**2 + ((2 * np.pi * f[:, 0]) * L - 1/((2 * np.pi * f[:, 0]) * C))**2)
+    
+        # Partial derivative with respect to L (x[1])
+        jacobian[:, 1] = (2 * 1j * np.pi**2 * f[:, 0]**2 * R * (2 * np.pi * f[:, 0] * L - 1/((2 * np.pi * f[:, 0]) * C))) / (R**2 + ((2 * np.pi * f[:, 0]) * L - 1/((2 * np.pi * f[:, 0]) * C))**3)
+    
+        # Partial derivative with respect to C (x[2])
+        jacobian[:, 2] = -((2 * 1j * np.pi**2 * f[:, 0]**2 * R) / (R**2 + ((2 * np.pi * f[:, 0]) * L - 1/((2 * np.pi * f[:, 0]) * C))**3))
+    
+        return jacobian 
+
     while state == True:
+        
         J = CalculateJacobian(f, x_opt, h)
-        J_T = J.T
-        r = - y + f(x_opt)
-        x_opt = x_opt - np.linalg.inv(J_T@J)@J_T@r
+        
+        J_analytical = np.abs(analytical_jacobian(x_opt, f(x_opt)))
+        
+        r = f(x_opt) - y 
+        
+        t1 = np.linalg.inv(np.dot(J.T, J))
+        t2 = np.dot(t1, J.T)
+        t3 = np.dot(t2,r)
+
+        
+        x_opt = x_opt - t3
         
         if n_iter > N_max:
-            state = False
-        if np.all(abs(x_opt - x_steps[n_iter]))<eps:
-            state = False    
+            print('Max. steps reached!')
+            break
         
+        #if np.all(abs(x_opt - x_steps[n_iter])) <= eps:
+        #if np.dot(r.T, r) <= eps:   
+        if np.all(abs(f(x_opt) - y)) <= eps:
+            print('Convergence reached!')
+            break
+        else:
+            n_iter += 1 
+            
         x_steps.append(x_opt)
-        n_iter += 1 
-    
+        
+    xs=x_opt
+    x_opt = np.abs(x_opt)
+    x_opt[1] /= 1e-3
+    x_opt[2] /= 1e-6
 
-    return x_opt, x_steps, n_iter
+    return x_opt, x_steps, n_iter, xs
+
+# ## TESTING GAUSS NEWTON METHODE
 
 
 ############ SECOND ORDER METHODS #############
@@ -330,16 +375,6 @@ def levenberg_marquardt(
             break
 
     return x_opt, x_steps, n_iter
-
-def CalculateJacobian(model, x0, h):
-    model_x0 = model(x0)
-    dim = (np.shape(model_x0)[0], np.shape(x0)[0])
-    J = np.zeros(dim)
-    for xi in range(len(x0)):
-        x0_der = x0.copy()
-        x0_der[xi] = x0_der[xi] + h
-        J[:,xi] = (model(x0_der) - model_x0)[:,0]/h
-    return J
 
 
 def get_test_fun_list() -> List[Callable]:
