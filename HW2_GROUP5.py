@@ -7,9 +7,45 @@ import matplotlib.pyplot as plt
 ############ Global variables #################
 rho: float = 0.61803398875
 state: str = True
+############ Previously implemented functions #################
+
+# Line search function :
+def line_search(
+    f: Callable,
+    alpha0: float,
+    x0: np.ndarray,
+    g: np.ndarray,
+    s: float = 2e-4,
+    k: float = 3.0,
+    eps: float = 1e-3,
+) -> Tuple[float, float, int]:
+    """[summary]
+
+    Args:
+        f (Callable): Function to perform the line search on.
+        alpha0 (float): Initial step parameter.
+        x0 (np.ndarray): Starting position.
+        g (np.ndarray): Search direction.
+        s (float, optional): Line search step scalar. Defaults to 10e-2.
+        k (float, optional): Line search step expansion. Defaults to 2.0.
+        eps (float, optional): Termination condition eps. Defaults to 1e-2.
+
+    Returns:
+        Tuple[float, float, int]: bracket left, bracket right, number of function calls
+    """
+    line_fun = lambda alpha: f(x0 + alpha*g)
+
+    a, b, c, i_run = bracketing(alpha0,s,k,line_fun)
+    a,c, counter = sectioning(a, b, c,line_fun, eps)
+
+    f_calls = i_run + counter
+
+
+    return a,c, f_calls
+
+
 ############ Helper functions #################
 
-############ Previously implemented functions #################
 def bracketing(
         a: float,
         s: float,
@@ -85,40 +121,6 @@ def sectioning(
 
     return a,c,counter
 
-# Line search function :
-def line_search(
-    f: Callable,
-    alpha0: float,
-    x0: np.ndarray,
-    g: np.ndarray,
-    s: float = 2e-4,
-    k: float = 3.0,
-    eps: float = 1e-3,
-) -> Tuple[float, float, int]:
-    """[summary]
-
-    Args:
-        f (Callable): Function to perform the line search on.
-        alpha0 (float): Initial step parameter.
-        x0 (np.ndarray): Starting position.
-        g (np.ndarray): Search direction.
-        s (float, optional): Line search step scalar. Defaults to 10e-2.
-        k (float, optional): Line search step expansion. Defaults to 2.0.
-        eps (float, optional): Termination condition eps. Defaults to 1e-2.
-
-    Returns:
-        Tuple[float, float, int]: bracket left, bracket right, number of function calls
-    """
-
-    line_fun = lambda alpha: f(x0 + alpha*g)
-
-    a, b, c, i_run = bracketing(alpha0,s,k,line_fun)
-    a,c, counter = sectioning(a, b, c,line_fun, eps)
-
-    f_calls = i_run + counter
-
-
-    return a,c, f_calls
 
 ############ Solution functions ###############
 ############ FIRST ORDER METHODS ##############
@@ -146,8 +148,10 @@ def gradient_descent(
         int: number of forward function calls.
         int: number of gradient evaluations. This is also the number of iterations + 1.
     """
-    x_steps = [x0]
+    x_steps = [x0.T]
     x_opt = x0.copy()
+    x_opt = x_opt.T
+    
     fc = 0
     gc = 1
 
@@ -166,7 +170,7 @@ def gradient_descent(
         fc = fc + f_calls
         gc += 1
 
-    return x_opt, x_steps, fc, gc
+    return x_opt.T, x_steps, fc, gc
 
 def gauss_newton(
     f: Callable[[np.ndarray], np.ndarray],
@@ -191,6 +195,11 @@ def gauss_newton(
         np.ndarray: list of steps the method takes to the optimal point (last one must be the optimal point from return 1).
         int: number of forward function calls.
     """
+    # x0 = x0.T
+
+    # x_opt = x_opt.T
+    
+    
     x0 = np.abs(x0)
     x0[1] *= 1e-3
     x0[2] *= 1e-6
@@ -257,12 +266,13 @@ def gauss_newton(
             
         x_steps.append(x_opt)
         
-    xs=x_opt
-    x_opt = np.abs(x_opt)
-    x_opt[1] /= 1e-3
-    x_opt[2] /= 1e-6
+    # xs=x_opt
+    # x_opt = np.abs(x_opt)
+    # x_opt[1] /= 1e-3
+    # x_opt[2] /= 1e-6
 
-    return x_opt, x_steps, n_iter, xs
+    return x_opt, x_steps, n_iter
+
 
 ############ SECOND ORDER METHODS #############
 def newton(
@@ -290,8 +300,9 @@ def newton(
     ##### Write your code here (Values below just as placeholders if the
     # function in question is not implemented by you for some reason, make sure
     # that you leave such a definition since the grading wont work. ) #####
-    x_steps = [x0]
+    x_steps = [x0.T]
     x_opt = x0.copy()
+    x_opt = x_opt.T
     n_iter = 1
     state_imp = True
 
@@ -310,7 +321,7 @@ def newton(
             break
 
 
-    return x_opt, x_steps, n_iter
+    return x_opt.T, x_steps, n_iter
 
 
 def levenberg_marquardt(
@@ -340,11 +351,12 @@ def levenberg_marquardt(
     # function in question is not implemented by you for some reason, make sure
     # that you leave such a definition since the grading wont work. ) #####
 
-    x_steps = [x0]
+    x_steps = [x0.T]
     x_opt = x0.copy()
+    x_opt = x_opt.T
     n_iter = 1
     nu_default = nu
-    
+
 
     while np.linalg.norm(g(x_opt)) > eps:
         
@@ -371,8 +383,10 @@ def levenberg_marquardt(
             print('Max. iterations reached!')
             break
 
-    return x_opt, x_steps, n_iter
+    return x_opt.T, x_steps, n_iter
 
+
+############ CONTROL FUNCTIONS ################
 
 def get_test_fun_list() -> List[Callable]:
     return [gradient_descent, gauss_newton, newton, levenberg_marquardt]
