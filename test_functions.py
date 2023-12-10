@@ -10,6 +10,14 @@ def print_available():
     print("  - F6 (id=4) ndim = 1")
     print("  - threehumpcamel (id=5) ndim = 2")
 
+def cx(x):
+
+    if len(x.shape) == 1:
+        x = x[:,None]
+    elif x.shape[0] != 2:
+        x = x.T
+
+    return x
 
 def test_function(fun_id):
 
@@ -24,23 +32,23 @@ def test_function(fun_id):
     if fun_id == "rosenbrock" or fun_id == 1:
         #  Rosenbrock's function
         #   Minimum: f(1,1) = 0
-        f = lambda x: (1 - x[:, 0]) ** 2 + 100 * (x[:, 1] - x[:, 0] ** 2) ** 2
+        f = lambda x: (1 - x[0, :]) ** 2 + 100 * (x[1, :] - x[0, :] ** 2) ** 2
         g = lambda x: np.array(
             [
-                -400 * x[:, 0] * (x[:, 1] - x[:, 0] ** 2) - 2 * (1 - x[:, 0]),
-                200 * (x[:, 1] - x[:, 0] ** 2)
+                -400 * x[0, :] * (x[1, :] - x[0, :] ** 2) - 2 * (1 - x[0, :]),
+                200 * (x[1, :] - x[0, :] ** 2),
             ]
         )
         H = lambda x: np.array(
             [
-                (1200 * x[:, 0] ** 2 - 400 * x[:, 1] + 2)[0],
-                (-400 * x[:, 0])[0],
-                (-400 * x[:, 0])[0],
+                (1200 * x[0, :] ** 2 - 400 * x[1, :] + 2)[0],
+                (-400 * x[0, :])[0],
+                (-400 * x[0, :])[0],
                 200,
             ]
         ).reshape(2, 2)
         n_x = 2
-        limits = np.array([[-5, 5], [-5, 5]], dtype=np.float)
+        limits = np.array([[-5, 5], [-5, 5]], dtype=np.float32)
         obj = 0
         x_opt = np.array([[1, 1]])
 
@@ -51,34 +59,34 @@ def test_function(fun_id):
         #             * f(-3.779310, -3.283186) = 0
         #             * f( 3.584428, -1.848126) = 0
         f = (
-            lambda x: (x[:, 0] ** 2 + x[:, 1] - 11) ** 2
-            + (x[:, 0] + x[:, 1] ** 2 - 7) ** 2
+            lambda x: (x[0, :] ** 2 + x[1, :] - 11) ** 2
+            + (x[0, :] + x[1, :] ** 2 - 7) ** 2
         )
 
         g = lambda x: np.array(
             [
-                4 * x[:, 0] * (x[:, 0] ** 2 + x[:, 1] - 11)
-                + 2 * (x[:, 0] + x[:, 1] ** 2 - 7),
-                2 * (x[:, 0] ** 2 + x[:, 1] - 11)
-                + 4 * x[:, 1] * (x[:, 0] + x[:, 1] ** 2 - 7),
+                4 * x[0, :] * (x[0, :] ** 2 + x[1, :] - 11)
+                + 2 * (x[0, :] + x[1, :] ** 2 - 7),
+                2 * (x[0, :] ** 2 + x[1, :] - 11)
+                + 4 * x[1, :] * (x[0, :] + x[1, :] ** 2 - 7),
             ]
         )
 
         H = lambda x: np.array(
             [
                 [
-                    (12 * x[:, 0] ** 2 + 4 * x[:, 1] - 42)[0],
-                    (4 * x[:, 0] + 4 * x[:, 1])[0],
+                    (12 * x[0, :] ** 2 + 4 * x[1, :] - 42)[0],
+                    (4 * x[0, :] + 4 * x[1, :])[0],
                 ],
                 [
-                    (4 * x[:, 0] + 4 * x[:, 1])[0],
-                    (4 * x[:, 0] + 12 * x[:, 1] ** 2 - 26)[0],
+                    (4 * x[0, :] + 4 * x[1, :])[0],
+                    (4 * x[0, :] + 12 * x[1, :] ** 2 - 26)[0],
                 ],
             ]
         )
         n_x = 2
         # 'n_x' states
-        limits = np.array([[-5, 5], [-5, 5]], dtype=np.float)  # Boundaries
+        limits = np.array([[-5, 5], [-5, 5]], dtype=np.float32)  # Boundaries
         obj = np.zeros((4,))
         # objective value (f(x_min) = obj)
         x_opt = np.array(
@@ -94,25 +102,25 @@ def test_function(fun_id):
         #   Minimum:  f(0,0) = 0
         f = (
             lambda x: 20
-            + (x[:, 0] ** 2 + x[:, 1] ** 2)
-            - 10 * (np.cos(2 * np.pi * x[:, 0]) + np.cos(2 * np.pi * x[:, 1]))
+            + (x[0, :] ** 2 + x[1, :] ** 2)
+            - 10 * (np.cos(2 * np.pi * x[0, :]) + np.cos(2 * np.pi * x[1, :]))
         )
 
         g = lambda x: np.array(
             [
-                2 * x[:, 0] + 20 * np.pi * np.sin(2 * np.pi * x[:, 0]),
-                2 * x[:, 1] + 20 * np.pi * np.sin(2 * np.pi * x[:, 1]),
+                2 * x[0, :] + 20 * np.pi * np.sin(2 * np.pi * x[0, :]),
+                2 * x[1, :] + 20 * np.pi * np.sin(2 * np.pi * x[1, :]),
             ]
         )
 
         H = lambda x: np.array(
             [
-                [(2 + 40 * np.pi ** 2 * np.cos(2 * np.pi * x[:, 0]))[0], 0],
-                [0, (2 + 40 * np.pi ** 2 * np.cos(2 * np.pi * x[:, 1]))[0]],
+                [(2 + 40 * np.pi ** 2 * np.cos(2 * np.pi * x[0, :]))[0], 0],
+                [0, (2 + 40 * np.pi ** 2 * np.cos(2 * np.pi * x[1, :]))[0]],
             ]
         )
         n_x = 2  # 'n_x' states
-        limits = np.array([[-5, 5], [-5, 5]], dtype=np.float)  # Boundaries
+        limits = np.array([[-5, 5], [-5, 5]], dtype=np.float32)  # Boundaries
         obj = 0  # objective value (f(x_min) = obj)
         x_opt = np.array([[0.0, 0.0]])
 
@@ -136,21 +144,21 @@ def test_function(fun_id):
         #  Three hump camel function
         #  Minimum: f(0,0) = 0
         f = (
-            lambda x: 2 * x[:, 0] ** 2
-            - 1.05 * x[:, 0] ** 4
-            + x[:, 0] ** 6 / 6
-            + x[:, 0] * x[:, 1]
-            + x[:, 1] ** 2
+            lambda x: 2 * x[0, :] ** 2
+            - 1.05 * x[0, :] ** 4
+            + x[0, :] ** 6 / 6
+            + x[0, :] * x[1, :]
+            + x[1, :] ** 2
         )
         g = lambda x: np.array(
             [
-                x[:, 0] ** 5 + 4 * x[:, 0] + x[:, 1] - 4.2 * x[:, 0] ** 3,
-                x[:, 0] + 2 * x[:, 1],
+                x[0, :] ** 5 + 4 * x[0, :] + x[1, :] - 4.2 * x[0, :] ** 3,
+                x[0, :] + 2 * x[1, :],
             ],
-            dtype=np.float,
+            dtype=np.float32,
         )
         H = lambda x: np.array(
-            [[(5 * x[:, 0] ** 4 - 12.6 * x[:, 0] ** 2 + 4)[0], 1], [1, 2]]
+            [[(5 * x[0, :] ** 4 - 12.6 * x[0, :] ** 2 + 4)[0], 1], [1, 2]]
         )
         n_x = 2  # 'n_x' states
         limits = np.array([[-4.0, 4.0], [-4.0, 4.0]])  # Boundaries
@@ -158,9 +166,38 @@ def test_function(fun_id):
         # objective value (f(x_min) = obj)
         x_opt = np.array([[0.0, 0.0]])
 
-    return f, g, H, n_x, limits, obj, x#_opt
+    elif fun_id == "quad" or fun_id == 6:
+            #  x^4
+            #  Minimum: f(0,0) = 0
+            f = (
+                lambda x: x[0, :] ** 4
+                + x[0, :] * x[1, :] 
+                + (1 + x[1, :] ) ** 2
+            )
+            g = lambda x: np.array(
+                [
+                4 * x[0, :] ** 3 + x[1, :],
+                x[0, :] + 2 * (1 + x[1, :] )
+                ,
+                ],
+                dtype=np.float32,
+            )
+
+            H = lambda x: np.array(
+                [
+                    (12 * (x[0, :]) ** 2)[0],
+                    1,
+                    1,
+                    2,
+                ]
+            ).reshape(2, 2)
+          
+
+            n_x = 2  # 'n_x' states
+            limits = np.array([[-4.0, 4.0], [-4.0, 4.0]])  # Boundaries
+            obj = 0.0
+            # objective value (f(x_min) = obj)
+            x_opt = np.array([[0.69588, -1.3479167]])
 
 
-
-
-test_function(2)
+    return f, g, H, n_x, limits, obj, x_opt
