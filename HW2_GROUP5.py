@@ -206,7 +206,7 @@ def gauss_newton(
  
     x_steps = [x0]
     x_opt = x0.copy()
-    n_iter = 1
+    n_iter = 0
     
     state = True
     
@@ -245,15 +245,15 @@ def gauss_newton(
             x0_der = x0.copy()
             x0_der[xi] = x0_der[xi] + h
             J[:,xi] = (model(x0_der) - model_x0)[:,0]/h
-        return J
+        return J, model_x0
 
     while state == True:
         
-        J = CalculateJacobian(f, x_opt, h)
+        J, f_xopt = CalculateJacobian(f, x_opt, h)
         
         #J_analytical = np.abs(analytical_jacobian(x_opt, f(x_opt)))
         
-        r = f(x_opt) - y 
+        r = f_xopt - y 
         
         t1 = np.linalg.inv(np.dot(J.T, J))
         t2 = np.dot(t1, J.T)
